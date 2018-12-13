@@ -1,17 +1,25 @@
-TYRC=../tyrc
+TYRROOT=..
+TYRC=$(TYRROOT)/tyrc
+TYRFLAGS=-d
 SRC=src
 BUILD=build
 BIN=bin
 
+DEPS=$(TYRC) $(wildcard $(TYRROOT)/tyr/*.py)
+
 SOURCES=$(wildcard $(SRC)/*.tyr)
-BINARIES=$(patsubst $(SRC)/%.tyr, $(BIN)/%, $(SOURCES))
+NAMES=$(patsubst $(SRC)/%.tyr, %, $(SOURCES))
 
-test: $(BINARIES)
-	./test.sh
+.PHONY: test
+test: $(NAMES)
+#	./test.sh  # TODO use test script once compiler works
 
-$(BUILD)/%.ll: $(SRC)/%.tyr | $(BUILD)
+.PHONY: $(NAMES)
+$(NAMES): %: $(BUILD)/%.ll  # TODO build binaries once compiler works
+
+$(BUILD)/%.ll: $(SRC)/%.tyr $(DEPS) | $(BUILD)
 	@mkdir -p $(dir $@)
-	$(TYRC) $< -o $@
+	$(TYRC) $(TYRFLAGS) $< -o $@
 
 $(BUILD)/%.s: $(BUILD)/%.ll | $(BUILD)
 	@mkdir -p $(dir $@)

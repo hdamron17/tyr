@@ -4,12 +4,13 @@
 
 """
 Usage:
-  tyrc [-v] <file> [-o <output>]
+  tyrc [-vd] <file> [-o <output>]
   tyrc -h
 
 Options:
   -h           Show this help screen
   -v           Be verbose
+  -d           Be extremely verbose in debug mode
   -o <output>  Specify LLVM IR output file [default: a.ll]
 """
 from docopt import docopt
@@ -20,5 +21,8 @@ if __name__ == "__main__":
   args = docopt(__doc__, version='tyrc 0.0.1')
   ifile = args['<file>']
   ofile = args['-o']
-  verbose = args['-v']
-  tyr.compile(ifile, ofile, verbose)
+  if args['-v']:
+    tyr.util.setverbosity(4)
+  if args['-d']:
+    tyr.util.setverbosity(5)
+  tyr.compile(ifile, ofile)
