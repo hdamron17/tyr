@@ -1,0 +1,24 @@
+#! /usr/bin/env python3
+
+# Copyright Hunter Damron 2018
+
+"""
+Usage:
+  tyrc [-v] <file> [-o <output>]
+  tyrc -h
+
+Options:
+  -h           Show this help screen
+  -v           Be verbose
+  -o <output>  Specify LLVM IR output file [default: a.ll]
+"""
+from docopt import docopt
+
+import tyr
+
+if __name__ == "__main__":
+  args = docopt(__doc__, version='tyrc 0.0.1')
+  ifile = args['<file>']
+  ofile = args['-o']
+  verbose = args['-v']
+  tyr.compile(ifile, ofile, verbose)
