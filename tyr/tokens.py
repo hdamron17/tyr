@@ -18,13 +18,13 @@ DIGITS      = "`DIGIT+"
 IDENTIFIER  = "`LETTER(`LETTER|`DIGIT)*"
 COMMENT     = "(#$|>#>!<#<)"
 STRING      = "(\"`LETTER*\"|'`LETTER*')"
-# BINOP       = "(+|\\-|\\*|/)"  # TODO add back in once escapes are working
+BINOP       = "(\\-|/)"
+            # TODO add back '\\+|\\*|' once escapes work
 UNIOP       = "(\\-)"
 WBINOP      = "(or|and)"
 WUNIOP      = "(not)"
 TERM        = "(`DIGITS|`STRING|`IDENTIFIER|`TERM *`BINOP *`TERM|`UNIOP *`TERM" \
             + "|`TERM +`WBINOP +`TERM|`WUNIOP +`TERM)"
-            # TODO add back '\\( *`TERM* *\\)|' once wildcards work
+            # TODO add back '\\( *`TERM* *\\)|' once escapes work
+TERM        = "(`DIGITS|`WBINOP +`TERM `TERM)"
 STATEMENT   = "`TERM. *"
-
-TODO        = "`DIGITS"
