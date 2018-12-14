@@ -22,16 +22,28 @@ class Token:
       # Consolidate subtokens and smash them together
       return "".join(token.consolidate() for token in self.value)
 
+  def partial_consolidate(self, basecases=[], fmtstr="({1}: {0})"):
+    substrs = []
+    for sub in self.value:
+      if sub.token_type in (basecases + ["_CHAR"]):
+        substrs.append(sub.consolidate())
+      elif sub.token_type in ["_GRP", "*"]:
+        substrs.append("{0}".format(sub.partial_consolidate(basecases=basecases)))
+      else:
+        substrs.append(fmtstr.format(sub.partial_consolidate(basecases=basecases), sub.token_type))
+    return "".join(substrs)
+
   def __str__(self):
     return "(%s: {%s})" % (self.token_type, self.consolidate())
   def __repr__(self):
-    return self.__str__()
+    return "(%s: {%s})" % (self.token_type, self.partial_consolidate())
 
 def malformed(name, loc, msg=""):
   perr("Malformed token pattern %s at char %d%s" % (name, loc, " (%s)" % msg if msg else ""))
 
-def findgroup(pattern, grouper="()", start=0, escape="\\"):
+def findgroup(pattern, grouper="()", innergroups=[], start=0, escape="\\"):
   # Find first instance of grouper, will usually be the first element
+  groupstarters = [g[0] for g in innergroups]
   while start < len(pattern) and pattern[start] != grouper[0]:
     start += 1
   if start == len(pattern):
@@ -41,7 +53,10 @@ def findgroup(pattern, grouper="()", start=0, escape="\\"):
   while brackstack > 0:
     if end >= len(pattern):
       return malformed("_GRP%s" % grouper, start, "Unmatched bracket")
-    if pattern[end] == escape:
+    if pattern[end] in groupstarters:
+      grpstart, grpend = findgroup(pattern, grouper=innergroups[groupstarters.index(pattern[end])], start=end, escape=escape)
+      end = grpend
+    elif pattern[end] == escape:
       if end+1 >= len(pattern):
         return malformed("_GRP%s" % grouper, end, "Unfinished escape")
       end += 1  # Skip two chars if it's escaped
@@ -77,7 +92,7 @@ def match_chargroup(code, tokpat, tokname="_CHAR", code_start=0):
   dashes = [j for j in range(toklen) if tokpat[j] == '-']
   backslashes = [j for j in range(toklen) if tokpat[j] == '\\']
   if len(backslashes) != 0:
-    pwarn("Escaped characters in char range not yet implemented")
+    pwarn("Escaped characters in char range not yet implemented")  # TODO implement this
   prevdash = toklen-1
   haschar = False
   for dash in dashes:
@@ -224,4 +239,4 @@ def tokenize(code):
     statements.append(statement)
     code = code[statement.length:]
     linenum += code[:statement.length].count('\n')
-  print("=====\n%s\n=====" % "\n".join(str(s.consolidate()) for s in statements))
+  return statements

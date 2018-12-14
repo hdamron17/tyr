@@ -6,25 +6,23 @@
 #  * (...|...)  Chooses between two sub patterns
 #  * x*         Chooses as many as possible of x
 #  * x+         Chooses at least 1 and as many as possible of x
-#  * $          Chooses literally everything possible on a line
-#  * !          Chooses literally everything possible across lines
 #  * \x         Chooses the literal of whatever character follows
 #  * ' '        The empty space chooses any whitespace
 #  * `key       Replaced with the previously defined rule key
+##  * $          Chooses literally everything possible on a line
+##  * !          Chooses literally everything possible across lines
 
 LETTER      = "[a-zA-Z_]"
 DIGIT       = "[0-9]"
 DIGITS      = "`DIGIT+"
 IDENTIFIER  = "`LETTER(`LETTER|`DIGIT)*"
-COMMENT     = "(#$|>#>!<#<)"
-STRING      = "(\"`LETTER*\"|'`LETTER*')"
-BINOP       = "(\\-|/)"
-            # TODO add back '\\+|\\*|' once escapes work
+# COMMENT     = "(#$|>#>!<#<)"  # Comments are weird so we'll wait a bit to figure out how to play nicely with strings and things
+STRING      = "(\"(`LETTER|`DIGIT| )*\"|'(`LETTER|`DIGIT| )*')"
+BINOP       = "(\\+|\\*|\\-|/)"
 UNIOP       = "(\\-)"
 WBINOP      = "(or|and)"
 WUNIOP      = "(not)"
-TERM        = "(`DIGITS|`STRING|`IDENTIFIER|`TERM *`BINOP *`TERM|`UNIOP *`TERM" \
-            + "|`TERM +`WBINOP +`TERM|`WUNIOP +`TERM)"
-            # TODO add back '\\( *`TERM* *\\)|' once escapes work
-TERM        = "(`DIGITS|`WBINOP +`TERM `TERM)"
+STERM       = "(`DIGITS|`STRING|`IDENTIFIER)"
+TERM        = "(`STERM|\\( *`TERM* *\\)|`STERM +`WBINOP +`TERM|`WUNIOP +`TERM" \
+            + "|`STERM *`BINOP *`TERM|`UNIOP *`TERM)"
 STATEMENT   = "`TERM. *"
