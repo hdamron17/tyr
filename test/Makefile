@@ -34,4 +34,3 @@ $(BIN) $(BUILD):
 
 clean:
 	rm -rf $(BUILD) $(BIN)
-

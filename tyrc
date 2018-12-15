@@ -4,25 +4,30 @@
 
 """
 Usage:
-  tyrc [-vd] <file> [-o <output>]
-  tyrc -h
+  tyrc [options] <file> [-o <output>]
 
 Options:
-  -h           Show this help screen
-  -v           Be verbose
-  -d           Be extremely verbose in debug mode
-  -o <output>  Specify LLVM IR output file [default: a.ll]
+  -d, --debug           Be extremely verbose in debug mode
+  -h, --help            Show this help screen
+  --no-color            Disable color output
+  -o <output>, --output=<output>  Specify LLVM IR output file [default: a.ll]
+  -v, --verbose         Be verbose
+  -V, --version         Print version
 """
 from docopt import docopt
 
 import tyr
 
+VERSION = "0.0.1"
+
 if __name__ == "__main__":
-  args = docopt(__doc__, version='tyrc 0.0.1')
+  args = docopt(__doc__, version='tyrc %s' % VERSION)
   ifile = args['<file>']
-  ofile = args['-o']
-  if args['-v']:
+  ofile = args['--output']
+  if args['--verbose']:
     tyr.util.setverbosity(4)
-  if args['-d']:
+  if args['--debug']:
     tyr.util.setverbosity(5)
+  if args['--no-color']:
+    tyr.util.setcolor(False)
   tyr.compile(ifile, ofile)

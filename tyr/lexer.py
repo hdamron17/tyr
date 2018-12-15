@@ -1,23 +1,27 @@
 # Copyright Hunter Damron 2018
 
+from .tokens import reserved_chars, wildcards
 from . import tokens
 from .util import *
 
 from collections import OrderedDict
 from string import whitespace
 
-tokens = OrderedDict((k,v) for k,v in vars(tokens).items() if not k.startswith("_"))
+tokens = OrderedDict((k,v) for k,v in vars(tokens).items() if k[0].isupper())
 preview_length = 15
 
 class Token:
-  def __init__(self, token_type, length, value):
+  def __init__(self, token_type, length, value, signature):
     self.token_type = token_type
     self.length = length
     self.value = value
+    self.signature = signature
 
   def consolidate(self):
     if self.token_type == "_CHAR":
       return self.value  # should be raw character
+    if self.token_type == "COMMENT":
+      return " "
     else:
       # Consolidate subtokens and smash them together
       return "".join(token.consolidate() for token in self.value)
@@ -36,7 +40,7 @@ class Token:
   def __str__(self):
     return "(%s: {%s})" % (self.token_type, self.consolidate())
   def __repr__(self):
-    return "(%s: {%s})" % (self.token_type, self.partial_consolidate())
+    return "(%s{%s}: {%s})" % (self.token_type, self.signature, self.partial_consolidate())
 
 def malformed(name, loc, msg=""):
   perr("Malformed token pattern %s at char %d%s" % (name, loc, " (%s)" % msg if msg else ""))
@@ -88,7 +92,7 @@ def findbars(pattern, bar="|", innergroups=["()", "[]"], start=0, escape="\\"):
 def match_chargroup(code, tokpat, tokname="_CHAR", code_start=0):
   codechar = code[code_start]
   toklen = len(tokpat)
-  pverbose("Attempting to match char range with contents '%s'" % tokpat)
+  pdebug("Attempting to match char range with contents '%s'" % tokpat)
   dashes = [j for j in range(toklen) if tokpat[j] == '-']
   backslashes = [j for j in range(toklen) if tokpat[j] == '\\']
   if len(backslashes) != 0:
@@ -97,7 +101,7 @@ def match_chargroup(code, tokpat, tokname="_CHAR", code_start=0):
   haschar = False
   for dash in dashes:
     if dash == 0 or dash == toklen-1 or tokpat[dash+1] == '-':
-      pverbose("Dash at index %d in token length %d" % (dash, toklen))
+      pdebug("Dash at index %d in token length %d" % (dash, toklen))
       return malformed(tokname, dash, "Unmatched dash in range")
     if ord(tokpat[dash-1]) <= ord(codechar) <= ord(tokpat[dash+1]):
       # code char is between range
@@ -110,7 +114,7 @@ def match_chargroup(code, tokpat, tokname="_CHAR", code_start=0):
     haschar = True
 
   if haschar:
-    return Token(tokname, 1, codechar)
+    return Token(tokname, 1, codechar, "[" + tokpat + "]")
   else:
     return False
 
@@ -125,10 +129,20 @@ def match_pgroup(code, tokpat, tokname="_GRP", code_start=0):
     prevbar = bar
   return None  # If none of the innards match, it doesn't match
 
+def match_whitespace(code, code_start=0):
+  if code[code_start] in whitespace:
+    return Token("_CHAR", 1, " ", code[code_start])
+  else:
+    comment_key = "COMMENT"
+    comment = match(code, (comment_key, tokens[comment_key]), code_start=code_start)
+    return comment if comment else None
+
 def match(code, token, code_start=0):
+  if len(code) - code_start <= 0:
+    return None
   tokname, tokpat = token  # elements from tokens dictionary
-  pverbose("ENTERING MATCH")
-  pverbose("Attempting to match token %s: '%s' from code segment '%s%s'"
+  pdebug("ENTERING MATCH")
+  pdebug("Attempting to match token %s: '%s' from code segment '%s%s'"
       % (tokname, tokpat, code[code_start:code_start+min(preview_length, len(code))]
       .replace("\n", " "), "..." if len(code) > preview_length else ""))
   if not tokpat :
@@ -146,11 +160,11 @@ def match(code, token, code_start=0):
     matchtoklen = 1
 
     if tchar == '\\':
-      if i+1 >= len(tokpat):
+      if i+1 >= len(tokpat) or tokpat[i+1] not in reserved_chars:
         return malformed(tokname, i, "Unfinished escape")
-      pverbose("Escaped char %c" % tokpat[i+1])
+      pdebug("Escaped char %c" % tokpat[i+1])
       refchar = tokpat[i+1]
-      matchfun = lambda code, c: Token("_CHAR", 1, code[c]) if code[c] == refchar else None
+      matchfun = lambda code, c: Token("_CHAR", 1, code[c], tokpat[i:i+2]) if code[c] == refchar else None
       matchtoklen = 2
     elif tchar == '[':
       start, endbracket = findgroup(tokpat, grouper="[]", start=i)
@@ -159,7 +173,6 @@ def match(code, token, code_start=0):
       matchtoklen = endbracket - start + 1
     elif tchar == '(':
       start, endbracket = findgroup(tokpat, grouper="()", start=i)
-      print("DBG: ", start, i+1,  endbracket, tokpat[i+1:endbracket])
       subpattern = tokpat[i+1:endbracket]  # Because apparently lambdas don't bind constants
       matchfun = lambda code, c: match_pgroup(code, subpattern, code_start=c)
       matchtoklen = endbracket - start + 1
@@ -169,74 +182,81 @@ def match(code, token, code_start=0):
         return malformed(tokname, i, "Unknown token name")
       matchfun = lambda code, c: match(code, recursive_token, code_start=c)
       matchtoklen = len(recursive_token[0]) + 1
+    elif tchar == '$':
+      ungreedy_i = i + (2 if i+1 < len(tokpat) and tokpat[i+1] in wildcards else 1)
+      matchfun = lambda code, c: Token("_CHAR", 1, code[c], tchar) if not match(code, ("",tokpat[ungreedy_i:]), code_start=c) else None
     elif tchar == ' ':
-      matchfun = lambda code, c: Token("_CHAR", 1, " ") if code[c] in whitespace else None
+      matchfun = lambda code, c: match_whitespace(code, c)
     else:
-      matchfun = lambda code, c: Token("_CHAR", 1, code[c]) if code[c] == tchar else None
+      matchfun = lambda code, c: Token("_CHAR", 1, code[c], tchar) if code[c] == tchar else None
 
     wildcard = ""
     if i + matchtoklen < len(tokpat):
       postchar = tokpat[i + matchtoklen]
-      if postchar in "*+":
+      if postchar in wildcards:
         wildcard = postchar
         matchtoklen += 1  # Match the wildcard also
-        pverbose("Applying wildcard %s" % wildcard)
+        pdebug("Applying wildcard %s" % wildcard)
 
-    pverbose("Applying token rule of length %d" % matchtoklen)
+    pdebug("Applying token rule of length %d" % matchtoklen)
     # Apply the produced function and add that token to subgroups
     if wildcard:
       i += matchtoklen
       wildcard_matches = []
       matchlen = 0
       done = False
-      while not done and c < len(code):
+      matches = 0
+      while not done and c < len(code):  #  and not (wildcard == "?" and matches > 1)
         ctok = matchfun(code, c)
         if ctok:
-          pverbose("Found %s subtoken %s at token index %d" % (wildcard, ctok, i-matchtoklen))
-          print(ctok.length)
+          pdebug("Found %s subtoken %s at token index %d" % (wildcard, ctok, i-matchtoklen))
           c += ctok.length
           matchlen += ctok.length
           wildcard_matches.append(ctok)
+          matches += 1
         else:
-          pverbose("Match * exiting")
+          pdebug("Match * exiting")
           done = True
-      subgroups.append(Token("*", matchlen, wildcard_matches))
+      subgroups.append(Token("*", matchlen, wildcard_matches, tokpat[i-matchtoklen:i]))
       if wildcard == "+" and not len(wildcard_matches):
-        pverbose("Wildcard + not satisfied")
+        pdebug("Wildcard + not satisfied")
         return None
     else:
       ctok = matchfun(code, c)
       i += matchtoklen  # Move down token by exhausted amount
       if ctok:
-        pverbose("Found subtoken %s at token index %d" % (ctok, i-matchtoklen))
+        pdebug("Found subtoken %s at token index %d" % (ctok, i-matchtoklen))
         c += ctok.length  # Move down token by matched amount
         subgroups.append(ctok)
       else:
-        pverbose("Token not found")
         return None
-    pverbose("Subtoken search ending with i=%d and char %s" % (i, tokpat[i] if i < len(tokpat) else "\\0"))
+    pdebug("Subtoken search ending with i=%d and char %s" % (i, tokpat[i] if i < len(tokpat) else "\\0"))
   # If the for loop exits, we have exhausted the pattern so it's a match
-  tok = Token(tokname, c-code_start, subgroups)
-  pverbose("Matched token %s" % tok)
-  pverbose("EXITING MATCH")
+  tok = Token(tokname, c-code_start, subgroups, tokpat)
+  pdebug("Matched token %s" % tok)
+  pdebug("EXITING MATCH")
   return tok
 
-def matchstatement(code, key="STATEMENT"):
+def matchbase(code, key="STATEMENT", **kwargs):
   # matches = {}  # TODO add in ability to keep track of intermediates found
   # TODO in the end this will just match to statements
-  val = match(code, (key, tokens[key]))
-  if val is not None:
-    return val
+  return match(code, (key, tokens[key]), **kwargs)
 
+# @override_verb
 def tokenize(code):
   linenum = 1
   statements = []
+  strip_left = match_whitespace(code)
+  if strip_left:
+    linenum += code[:strip_left.length].count('\n')
+    code = code[strip_left.length:]
   while len(code):
-    statement = matchstatement(code)
+    statement = matchbase(code)
     if statement is None:
-      print("Error in token in line %d" % linenum)
-      break # return None
-    statements.append(statement)
-    code = code[statement.length:]
+      perr("Error in token in line %d" % linenum)
+      return None
+    else:
+      statements.append(statement)
     linenum += code[:statement.length].count('\n')
+    code = code[statement.length:]
   return statements

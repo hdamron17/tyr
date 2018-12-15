@@ -8,8 +8,11 @@ def compile(ifile, ofile):
   bincode = ""
   with open(ifile, 'r') as ireader:
     code = ireader.read()
-    ast = lexer.tokenize(code)
-    pverbose("=====\n%s\n=====" % "\n".join(str(s.partial_consolidate(basecases=["DIGITS", "STRING", "IDENTIFIER"])) for s in ast))
+    token_tree = lexer.tokenize(code)
+    if not token_tree:
+      perr("Unable to create token tree, giving up.")
+      return
+    pverbose("TOKEN TREE\n=====\n%s\n=====" % "\n".join(str(s.consolidate()) for s in token_tree))
     success = True
 
   if success:
