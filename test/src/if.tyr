@@ -1,0 +1,5 @@
+void main(bool x) {
+  if (x) {
+    print(5);
+  }
+}

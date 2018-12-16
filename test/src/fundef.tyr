@@ -1,0 +1,4 @@
+void main(bool x, int y, void a) {
+  print(4);
+  print(5);
+}

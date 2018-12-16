@@ -2,6 +2,8 @@
 
 import sys
 from functools import partial
+import inspect
+from os.path import basename
 
 _VERBOSE = 3
 # Verbosity levels are as follows:
@@ -16,12 +18,16 @@ def setverbosity(b=3):
   global _VERBOSE
   _VERBOSE = b
 
+override_warnings = []
+
 def override_verb(fn, b=3):
   def override_fn(*args, **kwargs):
     global _VERBOSE
+    global override_warnings
     oldverbosity = _VERBOSE
-    if _VERBOSE != b:
+    if _VERBOSE != b and fn.__name__ not in override_warnings:
       pwarn("Overriding verbosity in function %s" % fn.__name__)
+      override_warnings.append(fn.__name__)
     setverbosity(b)
     ret = fn(*args, **kwargs)
     setverbosity(oldverbosity)
@@ -40,9 +46,20 @@ def setcolor(b=True):
 class colors:
   RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(31, 38)
 
+CONTEXT_WIDTH = 17
+
 def pinfo(*s, level=3, err=False, color=0, prefix="", **kw):
   if _VERBOSE >= level:
-    s = prefix + " ".join(str(x) for x in s)
+    # Get lineno assuming util.py will never be run by itself
+    caller = next((frame for frame in inspect.stack() if frame.filename != __file__), None)
+    if caller:
+      filename = basename(caller.filename)
+      lineno = str(caller.lineno)
+      spaces = " " * max(1, CONTEXT_WIDTH - len(filename) - len(lineno) - 3)
+      preprefix = "[%s:%s%s]  " % (filename, spaces, lineno)
+    else:
+      preprefix = ""
+    s = preprefix + prefix + " ".join(str(x) for x in s)
     if color and _COLOR:
       s = ('\033[%sm' % color) + s + '\033[0m'
 
@@ -62,3 +79,9 @@ def pverbose(*s, **kw):
 
 def pdebug(*s, **kw):
   pinfo(*s, level=5, **kw)
+
+def pblue(*s, **kw):
+  pdebug(*s, color=colors.BLUE)
+
+def malformed(name, loc, msg=""):
+  perr("Malformed token pattern %s at char %d%s" % (name, loc, " (%s)" % msg if msg else ""))

@@ -29,7 +29,9 @@ class Token:
   def partial_consolidate(self, basecases=[], fmtstr="({1}: {0})"):
     substrs = []
     for sub in self.value:
-      if sub.token_type in (basecases + ["_CHAR"]):
+      if isinstance(sub, str):
+        substrs.append(sub)
+      elif sub.token_type in (basecases + ["_CHAR"]):
         substrs.append(sub.consolidate())
       elif sub.token_type in ["_GRP", "*"]:
         substrs.append("{0}".format(sub.partial_consolidate(basecases=basecases)))
@@ -39,11 +41,9 @@ class Token:
 
   def __str__(self):
     return "(%s: {%s})" % (self.token_type, self.consolidate())
-  def __repr__(self):
-    return "(%s{%s}: {%s})" % (self.token_type, self.signature, self.partial_consolidate())
-
-def malformed(name, loc, msg=""):
-  perr("Malformed token pattern %s at char %d%s" % (name, loc, " (%s)" % msg if msg else ""))
+  # def __repr__(self):
+  #   return "(%s{%s}: {%s})" % (self.token_type, self.signature, self.partial_consolidate())
+  __repr__ = __str__
 
 def findgroup(pattern, grouper="()", innergroups=[], start=0, escape="\\"):
   # Find first instance of grouper, will usually be the first element
@@ -237,19 +237,21 @@ def match(code, token, code_start=0):
   pdebug("EXITING MATCH")
   return tok
 
-def matchbase(code, key="STATEMENT", **kwargs):
+def matchbase(code, key="GLOBAL", **kwargs):
   # matches = {}  # TODO add in ability to keep track of intermediates found
   # TODO in the end this will just match to statements
   return match(code, (key, tokens[key]), **kwargs)
 
-# @override_verb
+# Accepts a string containing the code body
+@override_verb
 def tokenize(code):
   linenum = 1
   statements = []
   strip_left = match_whitespace(code)
-  if strip_left:
+  while strip_left:
     linenum += code[:strip_left.length].count('\n')
     code = code[strip_left.length:]
+    strip_left = match_whitespace(code)
   while len(code):
     statement = matchbase(code)
     if statement is None:

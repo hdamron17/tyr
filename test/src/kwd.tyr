@@ -1,9 +1,0 @@
-print(5,23, -2);
-
-while (x == 243) {
-  print(4);
-}
-
-bool x = 9;
-int y;
-x = 8;

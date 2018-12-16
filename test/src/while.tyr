@@ -1,0 +1,5 @@
+void main(bool x, int y, void a) {
+  while (x < 5) {
+    print(4);
+  }
+}
