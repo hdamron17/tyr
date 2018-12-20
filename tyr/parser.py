@@ -3,6 +3,8 @@
 from .util import *
 from .lexer import tokens
 
+from enum import Enum
+
 class Identifier:
   def __init__(self, dtype, name, value=None, constant=False, fn=False, inputs=[]):
     self.dtype = dtype
@@ -35,19 +37,31 @@ class Scope:
     )
   __repr__ = __str__
 
-class Value:
-  def __init__(self, value, dtype=None):
-    self.value = value
-    self.dtype = dtype
-
-class Constant(Value):
+class Constant:
   def __init__(self, dtype, value):
-    super(value, dtype)
+    self.dtype = dtype
+    self.value = value
 
-class Operation(Value):
+  def __str__(self):
+    return "%s{%s}" % (self.dtype, self.value)
+  __repr__ = __str__
+
+class UnresolvedIdentifier:
+  def __init__(self, name):
+    self.name = name
+
+  def __str__(self):
+    return "Var{%s}" % self.name
+  __repr__ = __str__
+
+class Operation:
   def __init__(self, name, inputs):
     self.name = name
     self.inputs = inputs
+
+  def __str__(self):
+    return "%s(%s)" % (self.name, ",".join(str(x) for x in self.inputs))
+  __repr__ = __str__
 
 class Statement:
   def __init__(self, value, lval=None, declares=[]):
@@ -68,7 +82,7 @@ def parse_const_def(n):
 
 def parse_declaration(n):
   dtype, name = split_token(n, ("DTYPE", "IDENTIFIER"))
-  return Identifier(dtype, name)
+  return Identifier(dtype, name.name)  # name.name because we want to resolve
 
 def parse_body(n):
   return pattern_match(n, {
@@ -91,11 +105,29 @@ def parse_conditional(n, ctype):
 
 def parse_statement(n):
   if not len(token_subgroups(n)):
-    return "EMPTY"  # TODO make an empty statement possible
+    return "EMPTY"  # TODO make an empty statement possible and deal with it
   return passthrough(n)
 
-def parse_term(n):
-  return "TODO" + default_parser(n)
+def parse_funcall(n):
+  return pattern_match(n, {
+    ("IDENTIFIER", "TERM*"): lambda block: Operation(block[0], block[1]),
+  })
+
+def parse_operation(n):
+  binop_fn = lambda block: Operation(block[1], [block[0], block[2]])
+  uniop_fn = lambda block: Operation(block[0], [block[1]])
+  return pattern_match(n, {
+    ("LTERM","WBINOP","TERM"): binop_fn,
+    ("WUNIOP","TERM"): uniop_fn,
+    ("LTERM","BINOP","TERM"): binop_fn,
+    ("UNIOP","TERM"): uniop_fn
+  })
+
+def parse_number(n):
+  return pattern_match(n, {
+    ("DIGITS","DIGITS"): lambda block: Constant("float", float(".".join(block))),
+    ("DIGITS",): lambda block: Constant("int", int(block[0]))
+  })
 
 def passthrough(n):
   subs = token_subgroups(n)
@@ -114,9 +146,17 @@ parse_functions = {
   "IF": partial(parse_conditional, ctype="IF"),
   "WHILE": partial(parse_conditional, ctype="WHILE"),
   "STATEMENT": parse_statement,
-  "PTERM": lambda n: split_token(n, ("TERM",))[0],
+  "PTERM": passthrough,
+  "TERM": passthrough,
+  "LTERM": passthrough,
+  "FUNCALL": parse_funcall,
+  "OPERATION": parse_operation,
+  "IDENTIFIER": lambda n: UnresolvedIdentifier(n.consolidate()),  # TODO possibly deal with SIDENTIFIER
+  "NUMBER": parse_number,
   "*": lambda n: [process_node(sub) for sub in n.value]
 }
+
+allow_default = ["DIGITS", "LETTER", "DTYPE", "BINOP", "UNIOP", "WBINOP", "WUNIOP"]
 
 def pattern_match(n, signature_map, default_fn=None, required=True, comm_fn=None):
   # Signature map must be a dictionary of signature lists to parse functions
@@ -185,8 +225,11 @@ def split_token(n, signature, required=True):
 
 def process_node(node):
   fn = parse_functions.get(node.token_type, default_parser)
-  if fn is default_parser and node.token_type not in tokens:
-    pwarn("Unknown token type %s" % node.token_type)
+  if fn is default_parser:
+    if node.token_type not in tokens:
+      pwarn("Unknown token type %s" % node.token_type)
+    elif node.token_type not in allow_default:
+      pwarn("Applying default parser to %s with type %s" % (node.consolidate(), node.token_type))  # TODO remove this
   return fn(node)
 
 # Accepts a syntax tree of class lexer.Token

@@ -46,7 +46,7 @@ def setcolor(b=True):
 class colors:
   RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(31, 38)
 
-CONTEXT_WIDTH = 17
+CONTEXT_WIDTH = 20
 
 def pinfo(*s, level=3, err=False, color=0, prefix="", **kw):
   if _VERBOSE >= level:
@@ -56,7 +56,7 @@ def pinfo(*s, level=3, err=False, color=0, prefix="", **kw):
       filename = basename(caller.filename)
       lineno = str(caller.lineno)
       spaces = " " * max(1, CONTEXT_WIDTH - len(filename) - len(lineno) - 3)
-      preprefix = "[%s:%s%s]  " % (filename, spaces, lineno)
+      preprefix = "[ %s:%s%s ]  " % (filename, spaces, lineno)
     else:
       preprefix = ""
     s = preprefix + prefix + " ".join(str(x) for x in s)
