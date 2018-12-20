@@ -1,2 +1,2 @@
-const void x = 8;
+void x = 8;
 void main() {x;}

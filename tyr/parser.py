@@ -25,20 +25,35 @@ class Identifier:
 class Scope:
   def __init__(self, statements, condition_type=None, condition=None):
     self.statements = statements  # Must be a list
-    if not isinstance(statements, list):
-      pwarn("###\n%s" % ("\n".join(str(x) for x in inspect.stack())))  # TODO remove
-      pwarn("Statements must be a list, actually type %s: %s" % (type(statements), statements))  # TODO remove
     self.condition_type = condition_type  # One of IF, WHILE, FOR  # TODO determine the exact details of this
     self.condition = condition  # Type TERM  # TODO use ast types
 
   def __str__(self):
-    if isinstance(self.statements, Scope):
-      pwarn("splits = %s" % self.statements)  # TODO remove
     return "%s{\n%s\n}" % (
         "%s (%s) " % (self.condition_type, self.condition) if self.condition_type else "",
         "\n".join(str(x) for x in self.statements)
     )
   __repr__ = __str__
+
+class Value:
+  def __init__(self, value, dtype=None):
+    self.value = value
+    self.dtype = dtype
+
+class Constant(Value):
+  def __init__(self, dtype, value):
+    super(value, dtype)
+
+class Operation(Value):
+  def __init__(self, name, inputs):
+    self.name = name
+    self.inputs = inputs
+
+class Statement:
+  def __init__(self, value, lval=None, declares=[]):
+    self.value = value
+    self.lval = None
+    self.declares = declares
 
 default_parser = lambda n: n.consolidate()
 single_id = lambda x: x[0]  # Not an actual id but like a passthrough for length one signatures
@@ -175,7 +190,7 @@ def process_node(node):
   return fn(node)
 
 # Accepts a syntax tree of class lexer.Token
-# @override_verb
+@override_verb
 def parse(syntax_tree):
   ast = []
   for i, node in enumerate(syntax_tree):

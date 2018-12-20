@@ -46,7 +46,7 @@ FOR          = "for *\\(`IDENTIFIER +in +`TERM\\) *`BODY"
 SCOPE        = "({ *`STATEMENT* *}|`IF|`WHILE)"
 # TODO add in for loops eventually "|`FOR"
 FUNDEF       = "`DECLARATION *\\( *(`DECLARATION(, *`DECLARATION)* *)?\\) *`BODY"
-CONSTANT     = "const `DECLARATION *= *`TERM; *"
+CONSTANT     = "`DECLARATION *= *`TERM; *"
 GLOBAL       = "(`FUNDEF|`CONSTANT)"
 
 ###

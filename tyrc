@@ -2,32 +2,5 @@
 
 # Copyright Hunter Damron 2018
 
-"""
-Usage:
-  tyrc [options] <file> [-o <output>]
-
-Options:
-  -d, --debug           Be extremely verbose in debug mode
-  -h, --help            Show this help screen
-  --no-color            Disable color output
-  -o <output>, --output=<output>  Specify LLVM IR output file [default: a.ll]
-  -v, --verbose         Be verbose
-  -V, --version         Print version
-"""
-from docopt import docopt
-
-import tyr
-
-VERSION = "0.0.1"
-
-if __name__ == "__main__":
-  args = docopt(__doc__, version='tyrc %s' % VERSION)
-  ifile = args['<file>']
-  ofile = args['--output']
-  if args['--verbose']:
-    tyr.util.setverbosity(4)
-  if args['--debug']:
-    tyr.util.setverbosity(5)
-  if args['--no-color']:
-    tyr.util.setcolor(False)
-  tyr.compile(ifile, ofile)
+from tyr.tyrc import main
+main()
