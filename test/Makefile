@@ -1,3 +1,5 @@
+# Copyright Hunter Damron 2018
+
 TYRROOT=..
 TYRC=$(TYRROOT)/tyrc
 TYRFLAGS=-d
@@ -5,10 +7,10 @@ SRC=src
 BUILD=build
 BIN=bin
 
-DEPS=$(TYRC) $(wildcard $(TYRROOT)/tyr/*.py)
+DEPS:=$(TYRC) $(wildcard $(TYRROOT)/tyr/*.py)
 
-SOURCES=$(wildcard $(SRC)/*.tyr)
-NAMES=$(patsubst $(SRC)/%.tyr, %, $(SOURCES))
+SOURCES:=$(wildcard $(SRC)/*.tyr)
+NAMES:=$(patsubst $(SRC)/%.tyr, %, $(SOURCES))
 
 .PHONY: test
 test: $(NAMES)
