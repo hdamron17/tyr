@@ -1,0 +1,27 @@
+language: python
+
+python:
+  - '3.6'
+os:
+  - linux
+
+before_install:
+  - pip install -r requirements.txt
+  - make install
+
+script:
+  - make test
+
+before_deploy:
+  - pip install setuptools
+  - make dist
+
+deploy:
+  provider: releases
+  api_key:
+    secure: qcc0MMBybIPLsD5zt2Waw6eZhkuqh7eZInPmSAtd0uTM08bK4iTmyHblvEljp7TutUcvVWfUGbVlzddydgkZ5X427/KwkipRnf46W92XljZl3z+TAJe6f1m50wnZxGuRV1K9WHwXGVJl544A93G66DvYSoHgILgGoyzNgDFdPoOVCb3PVbnUjwA1ZLFSD42lgjReWWh2UjnhhrWKt2weHvSStNxqqgSkSPVkfPQHKMpnYuueom3dss3KU/nxTjuQ1Y3VLJYJZxH32GMzi9cQKgOY920nRQIwAkd17ClPpmzxzpnV22FlH09ay2aQyCxQ/qnf9S7A4swr577MfGqQcOtdnjljE0ZXrhClAMk/eCDU8bcYpcY1LQHzx1cyU5930/yYZcd0e7q6EqvABp3NQjI/tLokE1OFmsGVb8pfpvk4gEqe/hL/tOGj+/u5SFtGN89nzkmXctVpHSO6wGrUOre2WgaLCr2SVwlDU92jHha6kbwE79oT6kzMajSvGqGtniYrwiIQ6w05p2xWKNLkYOQUeR0AK/L0eY1r98wAgGbv2wnsTeeVsW7KNpl5nGwT/ZarPbBdzYY3BJnaj1xaFnsXTCgKQ+Rg2kOIjUZA+wg5adRG7I+qrm6+ntvPMVn78H9qsOJlMIAi9x16s7n80lzDxJyKT5TRUr/bNaMfJNs=
+  file: dist/tyr-*.tar.gz
+  file_glob: true
+  on:
+    # repo: hdamron17/tyr
+    tags: true
