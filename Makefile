@@ -21,7 +21,7 @@ $(DIST_FILE): $(DEPS)
 	$(PY) setup.py sdist
 
 install:
-	$(PY) setup.py install
+	$(PY) setup.py install --force
 
 uninstall:
 	$(PIP) uninstall tyr
