@@ -1,2 +1,1 @@
 void x = 8;
-void main() {x;}

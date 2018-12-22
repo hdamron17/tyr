@@ -37,7 +37,7 @@ OPERATION    = "(`LTERM +`WBINOP +`TERM|`WUNIOP +`TERM|`LTERM *`BINOP *`TERM|`UN
 TERM         = "(`LTERM|`PTERM|`OPERATION)"
 DTYPE        = "(void|bool|int|float|char|string)"
 DECLARATION  = "`DTYPE +`IDENTIFIER"
-ASSIGNMENT   = "(`DECLARATION|`IDENTIFIER) *(= *`TERM *)?; *"
+ASSIGNMENT   = "(`IDENTIFIER|`DECLARATION) *(= *`TERM *)?; *"
 STATEMENT    = "(; *|`TERM; *|`ASSIGNMENT|`SCOPE)"
 BODY         = "(`STATEMENT|`SCOPE) *"
 IF           = "if *`PTERM *`BODY"

@@ -1,6 +1,6 @@
 # Copyright Hunter Damron 2018
 
-from . import lexer, parser
+from . import lexer, parser, generator
 from .util import *
 
 def compile(code):
@@ -16,7 +16,11 @@ def compile(code):
     return
   pverbose("AST\n-----\n%s\n=====" % "\n".join(str(s) for s in ast))
 
-  output_code = "TODO"  # TODO change this to be the actual output code
+  output_code = generator.generate_llvm(ast)
+  if not output_code:
+    perr("Unable to produce llvm code, giving up.")
+    return
+  pverbose("LLVM Output Code\n-----\n%s\n=====" % output_code)
   return output_code
 
 def compile_file(ifile, ofile):

@@ -2,72 +2,7 @@
 
 from .util import *
 from .lexer import tokens
-
-from enum import Enum
-
-class Identifier:
-  def __init__(self, dtype, name, value=None, constant=False, fn=False, inputs=[]):
-    self.dtype = dtype
-    self.name = name
-    self.value = value
-    self.constant = constant
-    self.fn = fn
-    self.inputs = inputs
-
-  def __str__(self):
-    return "%s%s %s%s%s" % (
-        "const " if self.constant and not self.fn else "",
-        self.dtype,
-        self.name,
-        "(%s)" % ", ".join(str(x) for x in self.inputs) if self.fn else "",
-        " = %s" % str(self.value) if self.constant else ""
-    )
-  __repr__ = __str__
-
-class Scope:
-  def __init__(self, statements, condition_type=None, condition=None):
-    self.statements = statements  # Must be a list
-    self.condition_type = condition_type  # One of IF, WHILE, FOR  # TODO determine the exact details of this
-    self.condition = condition  # Type TERM  # TODO use ast types
-
-  def __str__(self):
-    return "%s{\n%s\n}" % (
-        "%s (%s) " % (self.condition_type, self.condition) if self.condition_type else "",
-        "\n".join(str(x) for x in self.statements)
-    )
-  __repr__ = __str__
-
-class Constant:
-  def __init__(self, dtype, value):
-    self.dtype = dtype
-    self.value = value
-
-  def __str__(self):
-    return "%s{%s}" % (self.dtype, self.value)
-  __repr__ = __str__
-
-class UnresolvedIdentifier:
-  def __init__(self, name):
-    self.name = name
-
-  def __str__(self):
-    return "Var{%s}" % self.name
-  __repr__ = __str__
-
-class Operation:
-  def __init__(self, name, inputs):
-    self.name = name
-    self.inputs = inputs
-
-  def __str__(self):
-    return "%s(%s)" % (self.name, ",".join(str(x) for x in self.inputs))
-  __repr__ = __str__
-
-class Statement:
-  def __init__(self, value, lval=None, declares=[]):
-    self.value = value
-    self.lval = None
-    self.declares = declares
+from .AST import *
 
 default_parser = lambda n: n.consolidate()
 single_id = lambda x: x[0]  # Not an actual id but like a passthrough for length one signatures
@@ -108,6 +43,14 @@ def parse_statement(n):
     return "EMPTY"  # TODO make an empty statement possible and deal with it
   return passthrough(n)
 
+def parse_assignment(n):
+  return pattern_match(n, {
+    ("DECLARATION", "TERM"): lambda block: Statement(block[1], block[0]),
+    ("IDENTIFIER", "TERM"): lambda block: Statement(block[1], block[0]),
+    ("DECLARATION",): lambda block: Statement(None, block[0]),
+    ("IDENTIFIER",): lambda block: Statement(None, block[0]),
+  })
+
 def parse_funcall(n):
   return pattern_match(n, {
     ("IDENTIFIER", "TERM*"): lambda block: Operation(block[0], block[1]),
@@ -146,6 +89,7 @@ parse_functions = {
   "IF": partial(parse_conditional, ctype="IF"),
   "WHILE": partial(parse_conditional, ctype="WHILE"),
   "STATEMENT": parse_statement,
+  "ASSIGNMENT": parse_assignment,
   "PTERM": passthrough,
   "TERM": passthrough,
   "LTERM": passthrough,
