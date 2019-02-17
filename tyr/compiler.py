@@ -31,8 +31,3 @@ def compile_file(ifile, ofile):
     if output_code is not None:
       with open(ofile, 'w+') as owriter:
         owriter.write(output_code)
-
-  # TODO remove the copying part
-  pwarn("Unimplemented, copying instead")
-  from shutil import copyfile
-  copyfile(ifile, ofile)

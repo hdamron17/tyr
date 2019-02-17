@@ -13,7 +13,7 @@ setup(
     "console_scripts": ["tyrc=tyr.tyrc:main"]
   },
   package_data = {
-    "test": ["Makefile", "test.sh", "*.tyr", "output/*"],
+    "test": ["Makefile", "test.sh", "*.tyr", "output/*", "src/*"],
     "tyr.llvm_code": ["*.ll"]
   },
   data_files = [
