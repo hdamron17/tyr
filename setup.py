@@ -17,7 +17,7 @@ setup(
     "tyr.llvm_code": ["*.ll"]
   },
   data_files = [
-    ("", ["LICENSE.txt"])
+    ("", ["LICENSE.txt", "VERSIONS.txt"])
   ],
   install_requires=[
     "docopt>=0.6.2"
