@@ -33,10 +33,9 @@ install: installdoc
 
 installdoc: $(MAN_PAGES)
 	install -g 0 -o 0 -m 0644 $^ $(MAN_DEST)
-	gzip $(MAN_DEST)/$(^F)
+	gzip -f $(MAN_DEST)/$(^F)
 
-echo:
-	echo "$(OPTIONS)"
+tyr/generator.py: tyr/llvm_code/stdio.ll
 
 man: $(MAN_PAGES)
 $(MAN_PAGES_GEN): %: %.in

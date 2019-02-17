@@ -1,5 +1,13 @@
-void main(bool x, int y, void a) {
-  while (x < 5) {
+int y = 9;
+
+int excel(int z) {
+  5;
+}
+
+int main() {
+  5;
+  int x = 0;
+  while (x < y) {
     print(4);
   }
 }

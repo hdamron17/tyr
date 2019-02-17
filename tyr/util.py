@@ -3,7 +3,11 @@
 import sys
 from functools import partial
 import inspect
-from os.path import basename
+import os
+from os.path import basename, dirname, join as pathjoin
+
+PY_ROOT = dirname(__file__)
+PKG_ROOT = pathjoin(PY_ROOT, os.pardir)
 
 _VERBOSE = 3
 # Verbosity levels are as follows:
