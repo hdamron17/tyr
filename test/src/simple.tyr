@@ -1,12 +1,7 @@
-bool main(int y, char x, bool u9) {
+int f(int x) {
   print(x);
 }
 
-int test() {
-  print(y);
-  print(5 + 4);
-}
-
-char another(char x) {
-  print(5*3);
+int main() {
+  f(-5);
 }

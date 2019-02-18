@@ -10,9 +10,6 @@ MAN_DEST=/usr/local/share/man/man1
 
 DEPS:=setup.py $(wildcard tyr/*.py test/src/*.tyr)
 
-SYNOPSIS:=$(shell ./tyrc -h | sed '2q;d' | xargs)
-OPTIONS:=$(shell ./tyrc -h | tail -n+4)
-
 PY=python3
 PIP=pip3
 
@@ -32,7 +29,7 @@ install: installdoc
 	$(PY) setup.py install --force
 
 installdoc: $(MAN_PAGES)
-	install -g 0 -o 0 -m 0644 $^ $(MAN_DEST)
+	install -m 0644 $^ $(MAN_DEST)
 	gzip -f $(MAN_DEST)/$(^F)
 
 tyr/generator.py: tyr/llvm_code/stdio.ll
