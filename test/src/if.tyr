@@ -1,3 +1,4 @@
+# TODO make the compiler support if else
 void main(bool x) {
   if (x) {
     print(5);

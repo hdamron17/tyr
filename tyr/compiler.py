@@ -2,9 +2,10 @@
 
 from . import lexer, parser, generator
 from .util import *
+from . import tyr_code
 
 def compile(code):
-  syntax_tree = lexer.tokenize(code)
+  syntax_tree = lexer.tokenize(tyr_code.stdlib() + "\n" +  code)
   if not syntax_tree:
     perr("Unable to create token tree, giving up.")
     return

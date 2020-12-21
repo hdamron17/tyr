@@ -3,7 +3,7 @@ import os.path
 
 _PKG_ROOT = os.path.dirname(__file__)
 
-_header_list = [f for f in os.listdir(_PKG_ROOT) if f.endswith(".ll")]
+_header_list = [f for f in os.listdir(_PKG_ROOT) if f.endswith(".tyr")]
 
 def _load_header(name):
   def _load_file(f=name):

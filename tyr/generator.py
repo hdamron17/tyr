@@ -2,6 +2,7 @@
 
 from .AST import *
 from .util import *
+from . import llvm_code
 
 MAIN_FN = "main"
 
@@ -22,7 +23,9 @@ op_map = {
   "+": "add",
   "-": "sub",
   "*": "mul",
-  "/": "sdiv"
+  "/": "sdiv",
+  "==": "icmp eq",
+  "!=": "icmp ne",
 }
 
 def name_mangle(fn):
@@ -58,8 +61,10 @@ def resolve_scope(ast_node, symbol_table, fn_table, llvm_consts, local_start=1):
       local_start, node_llvm_statements = resolve_scope(node, symbol_table, fn_table, llvm_consts, local_start)
       llvm_statements += ["; begin scope"] + node_llvm_statements + ["; end scope"]
     elif isinstance(node, Statement):
-      pdebug("TODO")
-      print(node)
+      pdebug("TODO %s" % node)
+      expr_name, expr_dtype, local_start, node_llvm_statements = resolve_expr(node.value, symbol_table, fn_table, llvm_consts, local_start)
+      node_llvm_statements.append("; TODO Assign to variable %s -> %s" % (expr_name, node.lval))
+      llvm_statements += node_llvm_statements  # TODO change this maybe?
     else:
       expr_name, expr_dtype, local_start, node_llvm_statements = resolve_expr(node, symbol_table, fn_table, llvm_consts, local_start)
       llvm_statements += node_llvm_statements
@@ -181,21 +186,21 @@ def generate_llvm(ast):
   symbol_table = {}  # Maps string llvm_name -> AST node, bool needs dereference
   fn_table = {}
 
-  header = open(pathjoin(PY_ROOT, "llvm_code/stdio.ll")).read()
+  header = llvm_code.stdio()
   add_header_declarations(header, symbol_table, fn_table)
 
   llvm_consts = {}
-  llvm_code = ""
+  llvm_body = ""
   for node in ast:
     pdebug("Globals:", symbol_table)
     pdebug("Functions:", fn_table)
     if node.fn:
       llvm_name, llvm_fn_code = resolve_fn(node, symbol_table, fn_table, llvm_consts)
-      llvm_code += llvm_fn_code
+      llvm_body += llvm_fn_code
     else:
       if node.name in symbol_table:
         perr("Redefinition of %s" % node.name)
-      llvm_code += resolve_global(node, symbol_table, llvm_consts)
+      llvm_body += resolve_global(node, symbol_table, llvm_consts)
       symbol_table["@_" + node.name] = (node, True)
   constants = "\n".join(v[0] + v[1] for k, v in llvm_consts.items())
-  return header + "\n" + constants + "\n" + llvm_code
+  return header + "\n" + constants + "\n" + llvm_body

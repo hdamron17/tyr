@@ -3,5 +3,6 @@ int f(int x) {
 }
 
 int main() {
+  bool x = 4 == 5;
   f(-5);
 }
