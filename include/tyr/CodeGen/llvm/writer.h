@@ -11,7 +11,9 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/TargetMachine.h>
 
-bool emitLLVMCode(LLVMModuleRef mod, char *fname);
-bool emitNativeCode(LLVMModuleRef mod, char *fname);
+bool b_emit_LLVM_code(LLVMModuleRef mod, FILE *f);
+bool b_emit_native_asm(LLVMModuleRef mod, FILE *f);
+bool b_emit_native_obj(LLVMModuleRef mod, FILE *f);
+bool b_emit_native_exe(LLVMModuleRef mod, FILE *f);
 
 #endif /* TYR_LLVM_WRITER_H */

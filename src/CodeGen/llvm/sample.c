@@ -6,11 +6,16 @@
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
 
+#include "codegen.h"
 #include "llvm/printers.h"
 #include "llvm/writer.h"
+#include "Util/message.h"
+
+extern LLVMModuleRef mod;
+extern bool endswith(char *str, char *end);
 
 int main() {
-    LLVMModuleRef mod = LLVMModuleCreateWithName("");
+    b_setup();
 
     LLVMValueRef sum = LLVMAddFunction(mod, "", LLVMFunctionType(LLVMInt32Type(), (LLVMTypeRef[]){LLVMInt32Type(), LLVMInt32Type()}, 2, 0));
     LLVMValueRef printf_fn = LLVMAddFunction(mod, "printf", LLVMFunctionType(LLVMVoidType(), (LLVMTypeRef[]){LLVMPointerType(LLVMInt8Type(), 0)}, 1, 1));
@@ -35,6 +40,8 @@ int main() {
     LLVMVerifyModule(mod, LLVMAbortProcessAction, &error);
     LLVMDisposeMessage(error);
 
-    emitLLVMCode(mod, "sample.bc");
-    emitNativeCode(mod, "sample.o");
+    char *oname = "sample.o";
+    FILE *of = fopen(oname, "w+");
+    b_write(of, oname);
+    fclose(of);
 }

@@ -16,6 +16,8 @@ AST_NODE* build_AST_stdin() {
 }
 
 AST_NODE* build_AST(FILE *stream) {
+    tyr_file = "";   // TODO move this
+    tyr_lineno = 1;  // ^^^^
     extern FILE *yyin;
     yyin = stream;
     yyparse();

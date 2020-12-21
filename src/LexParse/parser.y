@@ -2,12 +2,13 @@
 
 %{
 #include <stdio.h>
+#include "Util/message.h"
 extern int yylex(void);
 void yyerror(char*);
 int yyparse(void);
 %}
 
-%token CONST;
+%token CONSTANT;
 
 %%
 
@@ -16,8 +17,13 @@ eval
     | /* empty */
     ;
 
+newline
+    : '\n'  { tyr_lineno++; }
+    ;
+
 line
-    : expr '\n'            { printf("%d\n", $1); }
+    : expr newline  { printf("%d\n", $1); }
+    | newline
     ;
 
 expr
@@ -28,26 +34,26 @@ expr
 
 pmterm
     : term
-    | '+' term            { $$ = $2; }
-    | '-' term            { $$ = -$2; }
+    | '+' term  { $$ = $2; }
+    | '-' term  { $$ = -$2; }
     ;
 
 subexpr
     : term
-    | subexpr '+' term    { $$ = $1 + $3; }
-    | subexpr '-' term    { $$ = $1 - $3; }
+    | subexpr '+' term  { $$ = $1 + $3; }
+    | subexpr '-' term  { $$ = $1 - $3; }
     ;
 
 term
     : factor
-    | term '*' factor     { $$ = $1 * $3; }
-    | term '/' factor     { $$ = $1 / $3; }
-    | term '%' factor     { $$ = $1 % $3; }
+    | term '*' factor  { $$ = $1 * $3; }
+    | term '/' factor  { $$ = $1 / $3; }
+    | term '%' factor  { $$ = $1 % $3; }
     ;
 
 factor
-    : CONST               { $$ = $1; }
-    | '(' expr ')'        { $$ = $2; }
+    : CONSTANT  { $$ = $1; }
+    | '(' expr ')'  { $$ = $2; }
     ;
 
 %%

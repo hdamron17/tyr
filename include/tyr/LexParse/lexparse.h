@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "AST/ast.h"
+#include "Util/message.h"
 
 AST_NODE* build_AST_str(char* str);
 AST_NODE* build_AST_stdin();

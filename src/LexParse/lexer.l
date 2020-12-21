@@ -12,7 +12,7 @@ digits {digit}*
 letter [a-zA-Z_]
 identifier {letter}({letter}|{digit})*
 %%
-{ws}     {}
-{digits}    { yylval = atoi(yytext); return CONST; }
-.|\n      { return *yytext; }
+{ws}  {}
+{digits}  { yylval = atoi(yytext); return CONSTANT; }
+.|\n  { return *yytext; }
 %%
